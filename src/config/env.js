@@ -6,7 +6,7 @@
  * baseImgPath: 图片存放地址
  *
  */
-let baseUrl = 'https://api.tyyod.com';
+let baseUrl = 'https://apis.tyyod.com';
 let routerMode = 'hash';
 let baseImgPath;
 
