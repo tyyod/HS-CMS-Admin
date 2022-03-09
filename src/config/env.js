@@ -6,7 +6,7 @@
  * baseImgPath: 图片存放地址
  *
  */
-let baseUrl = 'https://apis.tyyod.com';
+let baseUrl = `https://${process.env.VUE_APP_BASE_HOST}`;
 let routerMode = 'hash';
 let baseImgPath;
 

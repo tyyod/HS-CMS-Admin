@@ -30,7 +30,7 @@ jobs:
           node-version: '14'
       - run: npm install
       - run: npm test
-      - run: npm run build
+      - run: npm run build:dev
 
       # deploy the project to remote service
       - name: Deploy to Staging server

@@ -6,13 +6,13 @@
           <p>HST内容管理系统</p>
         </div>
         <el-form :model="loginForm" :rules="rules" ref="loginForm">
-          <el-form-item prop="username">
-            <el-input style="margin-top: 10px" v-model="loginForm.username" :disabled="isLoginLoading" placeholder="用户名"></el-input>
+          <el-form-item prop="userName">
+            <el-input style="margin-top: 10px" v-model="loginForm.userName" :disabled="isLoginLoading" placeholder="用户名"></el-input>
           </el-form-item>
-          <el-form-item v-if="loginType === 0" prop="password">
+          <el-form-item prop="password">
             <el-input type="password" placeholder="密码" :disabled="isLoginLoading" v-model="loginForm.password"></el-input>
           </el-form-item>
-          <el-form-item v-if="loginType === 1" prop="authCode">
+          <el-form-item prop="authCode">
             <el-input placeholder="验证码" v-model="loginForm.authCode"  :disabled="isLoginLoading" oninput="value=value.replace(/[^\w]/g,'')" maxLength='6'>
               <template #append>
                 <el-button v-if="remainAuthCodeTime === 0" class="auth_code_sender" type="text" :disabled="sendingAuthCode" :loading="sendingAuthCode" @click="onTapAuthCode('loginForm')">发送验证码</el-button>
@@ -38,14 +38,13 @@ export default {
   name: "login",
   data() {
     return {
-      loginType: 1,
       loginForm: {
-        username: '',
+        userName: '',
         password: '',
         authCode: '',
       },
       rules: {
-        username: [
+        userName: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
         ],
         password: [
@@ -64,21 +63,27 @@ export default {
   },
   methods: {
     onTapAuthCode: function (formName) {
-      this.$refs[formName].validateField('username', async (valid) => {
+      this.$refs[formName].validateField('userName', async (valid) => {
         if (!valid) {
           this.sendingAuthCode = true;
           let app = this;
-          const resp = await sendAuthCode({userName: formName.userName})
-          if (resp.code === 0) {
+          try {
+            const resp = await sendAuthCode({userName: this.loginForm.userName})
+            if (resp.code === 0) {
+              app.remainAuthCodeTime = 180
+              //将最后获取验证码的时间写入localStorage
+              //用于页面刷新恢复倒计时
+              app.putStorageLastAuthTime()
+              //开始倒计时
+              app.onRemainTimesTickTack()
+            } else {
+              ElMessage.error(resp.msg);
+            }
+          } catch (e) {
+            console.error(e.toString());
+            ElMessage.error('不好意思，出错啦，请稍后重试');
+          } finally {
             app.sendingAuthCode = false
-            app.remainAuthCodeTime = 180
-            //将最后获取验证码的时间写入localStorage
-            //用于页面刷新恢复倒计时
-            app.putStorageLastAuthTime()
-            //开始倒计时
-            app.onRemainTimesTickTack()
-          } else {
-            ElMessage.error(resp.msg);
           }
         } else {
           ElMessage.error('用户名不能为空哦～');
@@ -89,21 +94,28 @@ export default {
       this.$refs[formName].validate(async (valid) => {
         if (valid) {
           this.isLoginLoading = true;
-          const resp = await adminLogin({})
-          if (resp.code === 0) {
-            this.putStorageUser(this.loginForm.username)
+          try {
+            const resp = await adminLogin({
+              userName: this.loginForm.userName,
+              password: this.loginForm.password,
+              verifyCode: this.loginForm.authCode,
+              authType: 1
+            })
+            if (resp.code === 0) {
+              this.putStorageUser(this.loginForm.userName)
+              await this.$router.push("/manager")
+            } else {
+              ElMessage.error(resp.msg);
+            }
+          } catch (e) {
+            console.error(e.toString());
+            ElMessage.error('不好意思，出错啦，请稍后重试');
+          } finally {
             this.isLoginLoading = false
-            await this.$router.push("/manager")
-          } else {
-            ElMessage.error(resp.msg);
           }
         } else {
           let alertText = ''
-          if (this.loginType === 0) {
-            alertText = '用户名和密码不能为空哦～'
-          } else if (this.loginType === 1) {
-            alertText = '用户名和验证码不能为空哦～'
-          }
+          alertText = '用户名、密码和验证码不能为空哦～'
           ElMessage.error(alertText);
         }
       })
@@ -141,7 +153,7 @@ export default {
   created(){
     let userName = this.getStorageUser()
     if (userName) {
-      this.loginForm.username = userName
+      this.loginForm.userName = userName
     }
     let lastAuthTime = this.getStorageLastAuthTime()
     if (lastAuthTime) {

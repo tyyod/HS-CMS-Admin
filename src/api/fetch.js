@@ -1,67 +1,46 @@
 import {baseUrl} from "@/config/env";
 
 export default async({url, data, method = 'GET'}) => {
-    method = method.toUpperCase()
-    url = baseUrl + url
-    if (method === 'GET' && data) {
-        let paramsArray = []
+    method = method.toUpperCase();
+    url = baseUrl + url;
+
+    // 此处规定get请求的参数使用时放在data中，如同post请求
+    if (method === 'GET') {
+        let dataStr = '';
         Object.keys(data).forEach(key => {
-            paramsArray.push(key + '=' + data[key])
+            dataStr += key + '=' + data[key] + '&';
         })
-        if (paramsArray) {
-            url = url + '?' + paramsArray.join('&');
+
+        if (dataStr !== '') {
+            dataStr = dataStr.substr(0, dataStr.lastIndexOf('&'));
+            url = url + '?' + dataStr;
         }
     }
 
-    if (window.fetch) {
-        let config = {
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        }
-        if (method === 'POST') {
-            Object.defineProperty(config, 'body', {
-                value: JSON.stringify(data)
-            })
-        }
-        try {
-            const response = await fetch(url, config);
-            return await response.json()
-        } catch (error) {
-            throw new Error(error)
-        }
-    } else {
-        return new Promise((resolve, reject) => {
-            let requestObj;
-            if (window.XMLHttpRequest) {
-                requestObj = new XMLHttpRequest();
-            } else {
-                // eslint-disable-next-line no-undef
-                requestObj = new ActiveXObject;
-            }
+    let requestConfig = {
+        // fetch默认不会带cookie，需要添加配置项credentials允许携带cookie
+        credentials: 'include',
+        method: method,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        mode: "cors", // 以CORS的形式跨域
+        cache: "force-cache"
+    }
 
-            let sendData = '';
-            if (method === 'POST') {
-                sendData = JSON.stringify(data);
-            }
-
-            requestObj.open(method, url, true);
-            requestObj.setRequestHeader("Content-type", "application/json");
-            requestObj.send(sendData);
-
-            requestObj.onreadystatechange = () => {
-                if (requestObj.readyState === 4) {
-                    if (requestObj.status === 200) {
-                        let obj = requestObj.response
-                        if (typeof obj !== 'object') {
-                            obj = JSON.parse(obj);
-                        }
-                        resolve(obj)
-                    } else {
-                        reject(requestObj)
-                    }
-                }
-            }
+    if (method === 'POST') {
+        Object.defineProperty(requestConfig, 'body', {
+            value: JSON.stringify(data)
         })
     }
+
+    try {
+        const response = await fetch(url, requestConfig);
+        const responseJson = await response.json();
+        return responseJson
+    } catch (error) {
+        throw new Error(error)
+    }
+
 }
