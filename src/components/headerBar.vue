@@ -1,6 +1,6 @@
 <template>
   <div class="header_container">
-    <div><span style="font-size: 28px; color: #409EFF; font-weight: bold">Interview Management</span></div>
+    <div><span style="font-size: 28px; color: #409EFF; font-weight: bold">HSC管理系统</span></div>
     <el-dropdown @command="handleCommand" menu-align='start'>
       <div class="block"><el-avatar :size="40" :src="circleUrl"></el-avatar></div>
       <template #dropdown>

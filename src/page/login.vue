@@ -33,6 +33,7 @@
 <script>
 import {ElMessage} from "element-plus";
 import {adminLogin, sendAuthCode} from "@/api";
+import { sha256 } from 'js-sha256'
 const SEND_AUTH_CODE_INTERVAL = 180;
 export default {
   name: "login",
@@ -68,7 +69,7 @@ export default {
           this.sendingAuthCode = true;
           let app = this;
           try {
-            const resp = await sendAuthCode({userName: this.loginForm.userName})
+            const resp = await sendAuthCode({userName: this.loginForm.userName, "channel": 1,})
             if (resp.code === 0) {
               app.remainAuthCodeTime = 180
               //将最后获取验证码的时间写入localStorage
@@ -97,7 +98,7 @@ export default {
           try {
             const resp = await adminLogin({
               userName: this.loginForm.userName,
-              password: this.loginForm.password,
+              password: sha256(this.loginForm.password),
               verifyCode: this.loginForm.authCode,
               authType: 1
             })

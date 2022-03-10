@@ -4,6 +4,10 @@
 ```
 npm install
 ```
+###### npm版本过高会提示冲突，使用`--legacy-peer-deps`参数：
+```angular2html
+npm install --legacy-peer-deps
+```
 
 ### Compiles and hot-reloads for development
 ```
