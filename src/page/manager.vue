@@ -70,7 +70,7 @@ export default {
 </script>
 
 <style scoped>
-  @import "../style/common.scss";
+  @import "../style/common.less";
 
   .el-menu-vertical:not(.el-menu--collapse) {
     width: 100%;

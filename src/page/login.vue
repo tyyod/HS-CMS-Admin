@@ -159,20 +159,20 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
- @import "../style/mixin.scss";
+<style lang="less" scoped>
+ @import "../style/mixin.less";
  .login_page{
 
  }
 
- $loginFormWidth: 350px;
- $loginFormHeight: 230px;
- $loginFormPadding: 25px;
+ @loginFormWidth: 350px;
+ @loginFormHeight: 230px;
+ @loginFormPadding: 25px;
 
 .form_container{
-  @include size($loginFormWidth, $loginFormHeight);
-  @include center($loginFormWidth, $loginFormHeight, $loginFormPadding);
-  padding: $loginFormPadding;
+  .size(@loginFormWidth, @loginFormHeight);
+  .center(@loginFormWidth, @loginFormHeight, @loginFormPadding);
+  padding: @loginFormPadding;
   border-radius: 5px;
   text-align: center;
   border: 1px solid #DCDFE6;
