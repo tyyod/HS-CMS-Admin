@@ -2,7 +2,7 @@ import axios from 'axios';
 import router from '../router';
 
 // API 基础配置
-export const API_HOST = import.meta.env.CMS_API_HOST;
+export const API_HOST = import.meta.env.VITE_CMS_API_HOST;
 
 // 创建client对象，baseURL可以根据环境的切换
 const client = axios.create({
