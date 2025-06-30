@@ -12,7 +12,7 @@
         <span class="navbar-title">HSCMS</span>
       </div>
       <div class="navbar-user" v-if="userInfo.nickName">
-        <el-avatar class="user-avatar" size="36">
+        <el-avatar class="user-avatar" :size="36">
           <Icon size="36" color="#409EFF"><UserAvatarFilledAlt /></Icon>
         </el-avatar>
         <span class="user-info">{{ userInfo.nickName }}</span>
