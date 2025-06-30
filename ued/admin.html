@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后台管理系统</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+      background: linear-gradient(120deg, #e0e7ff 0%, #f5f6fa 100%);
+      min-height: 100vh;
+    }
+    .navbar {
+      width: 100vw;
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(60,60,120,0.07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+    .navbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      margin-right: 2px;
+    }
+    .navbar-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #409EFF;
+      letter-spacing: 2px;
+      font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+    }
+    .navbar-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 180px;
+      overflow: hidden;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #e0e7ff;
+      background: #f5f6fa;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .user-info {
+      font-size: 15px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 110px;
+      display: inline-block;
+    }
+    @media (max-width: 600px) {
+      .user-info { display: none; }
+    }
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+      margin-top: 60px;
+    }
+    .sidebar {
+      width: 220px;
+      background: #fff;
+      box-shadow: 2px 0 12px rgba(60,60,120,0.07);
+      display: flex;
+      flex-direction: column;
+      padding-top: 32px;
+      z-index: 2;
+      height: calc(100vh - 60px);
+      position: fixed;
+      top: 60px;
+      left: 0;
+      overflow-y: auto;
+    }
+    .sidebar .logo {
+      display: none;
+    }
+    .menu {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 28px;
+      font-size: 16px;
+      color: #333;
+      cursor: pointer;
+      border-left: 4px solid transparent;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      border-radius: 0 20px 20px 0;
+      margin-right: 10px;
+    }
+    .menu-item.active, .menu-item:hover {
+      background: #e8f3ff;
+      color: #409EFF;
+      border-left: 4px solid #409EFF;
+    }
+    .menu-item .icon {
+      margin-right: 14px;
+      font-size: 20px;
+      width: 22px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .content {
+      flex: 1;
+      padding: 48px 40px;
+      background: transparent;
+      min-height: 100vh;
+      z-index: 1;
+      margin-left: 220px;
+    }
+    .welcome {
+      font-size: 28px;
+      color: #409EFF;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 900px) {
+      .admin-layout { flex-direction: column; }
+      .sidebar {
+        width: 100vw;
+        height: 60px;
+        flex-direction: row;
+        padding-top: 0;
+        box-shadow: none;
+        border-bottom: 1px solid #eee;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        margin-left: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .sidebar .logo { display: none; }
+      .menu { flex-direction: row; gap: 0; width: 100vw; }
+      .menu-item { flex: 1; justify-content: center; border-radius: 0; margin-right: 0; padding: 14px 0; }
+      .content { margin-left: 0; padding: 80px 8vw 32px 8vw; }
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="navbar-left">
+      <span class="logo-icon">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="16" fill="#409EFF"/>
+          <text x="10" y="26" font-size="18" font-family="Arial, sans-serif" fill="#fff" font-weight="bold">H</text>
+        </svg>
+      </span>
+      <span class="navbar-title">HSCMS</span>
+    </div>
+    <div class="navbar-user">
+      <img class="user-avatar" src="https://api.dicebear.com/7.x/miniavs/svg?seed=admin" alt="avatar">
+      <span class="user-info">admin（管理员）</span>
+    </div>
+  </div>
+  <div class="admin-layout">
+    <div class="sidebar">
+      <div class="menu">
+        <div class="menu-item active" data-content="dashboard">
+          <span class="icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#409EFF" stroke-width="1.6"><rect x="3" y="9" width="4" height="8" rx="1.2"/><rect x="8.5" y="5" width="3" height="12" rx="1.2"/><rect x="13.5" y="12" width="3" height="5" rx="1.2"/></svg>
+          </span>Dashboard
+        </div>
+        <div class="menu-item" data-content="article">
+          <span class="icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#409EFF" stroke-width="1.6"><rect x="3" y="4" width="14" height="12" rx="2"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="12" x2="12" y2="12"/></svg>
+          </span>文章
+        </div>
+        <div class="menu-item" data-content="ebook">
+          <span class="icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#409EFF" stroke-width="1.6"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 7h6M7 10h6M7 13h4"/></svg>
+          </span>电子书
+        </div>
+        <div class="menu-item" data-content="user">
+          <span class="icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#409EFF" stroke-width="1.6"><circle cx="10" cy="7" r="3"/><path d="M4 16c0-2.2 2.7-4 6-4s6 1.8 6 4"/></svg>
+          </span>用户
+        </div>
+        <div class="menu-item" data-content="setting">
+          <span class="icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#409EFF" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.93 4.93l1.42 1.42M13.65 13.65l1.42 1.42M4.93 15.07l1.42-1.42M13.65 6.35l1.42-1.42"/></svg>
+          </span>设置
+        </div>
+      </div>
+    </div>
+    <div class="content" id="main-content">
+      <div class="welcome">欢迎来到后台管理系统</div>
+      <div>请选择左侧菜单进行操作。</div>
+    </div>
+  </div>
+  <script>
+    // 菜单切换逻辑
+    const menuItems = document.querySelectorAll('.menu-item');
+    const mainContent = document.getElementById('main-content');
+    const contentMap = {
+      dashboard: `<div class='welcome'>欢迎来到后台管理系统</div><div>这里是Dashboard首页。</div>`,
+      article: `<div class='welcome'>文章管理</div><div>这里可以管理所有文章。</div>`,
+      ebook: `<div class='welcome'>电子书管理</div><div>这里可以管理电子书。</div>`,
+      user: `<div class='welcome'>用户管理</div><div>这里可以管理用户信息。</div>`,
+      setting: `<div class='welcome'>系统设置</div><div>这里可以进行系统相关设置。</div>`
+    };
+    menuItems.forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelector('.menu-item.active').classList.remove('active');
+        this.classList.add('active');
+        const key = this.getAttribute('data-content');
+        mainContent.innerHTML = contentMap[key];
+      });
+    });
+  </script>
+</body>
+</html> 

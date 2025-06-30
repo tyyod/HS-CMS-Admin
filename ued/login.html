@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>欢迎使用HSCMS</title>
+  <!-- Element Plus 样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+  <style>
+    body {
+      background: linear-gradient(120deg, #e0e7ff 0%, #f5f6fa 100%);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+    #bg-canvas {
+      position: fixed;
+      left: 0; top: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      display: block;
+    }
+    .login-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      min-height: 100vh;
+      background: transparent;
+      z-index: 1;
+      position: relative;
+    }
+    .login-form-side {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(60, 60, 120, 0.13);
+      padding: 38px 32px 32px 32px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+    }
+    .login-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #409EFF;
+      margin-bottom: 18px;
+      letter-spacing: 2px;
+      text-align: center;
+      width: 100%;
+    }
+    .login-desc {
+      color: #888;
+      font-size: 15px;
+      margin-bottom: 32px;
+      width: 100%;
+      text-align: center;
+    }
+    .el-form-item {
+      margin-bottom: 22px;
+      position: relative;
+    }
+    .el-input__inner {
+      border: 1.5px solid #d4d7de !important;
+      border-radius: 6px !important;
+      box-shadow: none !important;
+      transition: border-color 0.2s;
+      font-size: 16px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .el-input__inner:focus {
+      border-color: #409EFF !important;
+      background: #fff;
+    }
+    .password-eye {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      z-index: 3;
+    }
+    .password-eye:hover {
+      opacity: 1;
+    }
+    .login-btn {
+      width: 100%;
+      font-size: 16px;
+      padding: 22px 0;
+      border-radius: 6px;
+    }
+    @media (max-width: 900px) {
+      .login-card { width: 98vw; min-width: 0; padding: 32px 8vw; }
+    }
+    .navbar-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 220px;
+      overflow: hidden;
+    }
+    .user-info {
+      font-size: 15px;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 120px;
+      display: inline-block;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    .user-info[title] {
+      border-bottom: 1px dotted #bbb;
+    }
+    @media (max-width: 600px) {
+      .user-info { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="login-wrapper">
+    <div class="login-form-side">
+      <div class="login-card">
+        <div class="login-title">欢迎使用HSCMS</div>
+        <div class="login-desc">高效内容管理，安全便捷登录</div>
+        <form style="width:100%;" autocomplete="off" id="login-form">
+          <div class="el-form-item">
+            <input class="el-input__inner" type="text" placeholder="用户名" autocomplete="username" id="username-input">
+          </div>
+          <div class="el-form-item" style="margin-bottom:10px;position:relative;">
+            <input class="el-input__inner" id="password-input" type="password" placeholder="密码" autocomplete="current-password">
+            <svg class="password-eye" id="toggle-password" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="12" rx="7" ry="5"/><circle cx="12" cy="12" r="2.5"/><path id="eye-slash" d=""/></svg>
+          </div>
+          <div id="login-error" style="height:16px;color:#f56c6c;font-size:12px;margin-bottom:6px;text-align:left;line-height:16px;visibility:hidden;padding-left:2px;"></div>
+          <div class="el-form-item" style="margin-bottom:0;">
+            <button type="submit" class="el-button el-button--primary login-btn">登录</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    // 动态圆球动画
+    const colors = ['#a5b4fc', '#60a5fa', '#fbbf24', '#409EFF', '#c084fc'];
+    const balls = [];
+    const BALL_COUNT = 6;
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    for(let i=0;i<BALL_COUNT;i++){
+      const r = 40 + Math.random()*50;
+      balls.push({
+        x: Math.random()*(window.innerWidth-r*2)+r,
+        y: Math.random()*(window.innerHeight-r*2)+r,
+        r,
+        color: colors[i%colors.length],
+        vx: (Math.random()-0.5)*1.2,
+        vy: (Math.random()-0.5)*1.2
+      });
+    }
+    function drawBalls() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(const b of balls){
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+        ctx.closePath();
+        ctx.fillStyle = b.color;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 30;
+        ctx.fill();
+        ctx.restore();
+        // 运动
+        b.x += b.vx;
+        b.y += b.vy;
+        if(b.x-b.r<0){ b.x=b.r; b.vx*=-1; }
+        if(b.x+b.r>canvas.width){ b.x=canvas.width-b.r; b.vx*=-1; }
+        if(b.y-b.r<0){ b.y=b.r; b.vy*=-1; }
+        if(b.y+b.r>canvas.height){ b.y=canvas.height-b.r; b.vy*=-1; }
+      }
+      requestAnimationFrame(drawBalls);
+    }
+    drawBalls();
+
+    // 密码小眼睛切换
+    const pwdInput = document.getElementById('password-input');
+    const togglePwd = document.getElementById('toggle-password');
+    let pwdVisible = false;
+    togglePwd.addEventListener('click', function() {
+      pwdVisible = !pwdVisible;
+      pwdInput.type = pwdVisible ? 'text' : 'password';
+      // 画斜线
+      const slash = document.getElementById('eye-slash');
+      if (pwdVisible) {
+        slash.setAttribute('d', 'M4 20L20 4');
+      } else {
+        slash.setAttribute('d', '');
+      }
+    });
+
+    // 登录表单错误信息模拟
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = document.getElementById('username-input').value.trim();
+      const password = document.getElementById('password-input').value;
+      const errorDiv = document.getElementById('login-error');
+      // 简单模拟：用户名/密码都为 admin 才算成功
+      if (username !== 'admin' || password !== 'admin') {
+        errorDiv.textContent = '用户名或密码错误';
+        errorDiv.style.visibility = 'visible';
+      } else {
+        errorDiv.style.visibility = 'hidden';
+        errorDiv.textContent = '';
+        // 可在此处跳转或其他逻辑
+        alert('登录成功！');
+      }
+    });
+  </script>
+</body>
+</html> 

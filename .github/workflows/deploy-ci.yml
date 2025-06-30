@@ -13,24 +13,30 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  build-and-deploy:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@master
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-      # run build command to build project
-      - name: build project
-        uses: actions/setup-node@v2
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '14'
-      - run: npm install
-      - run: npm test
-      - run: npm run build
+          node-version: '22.16.0'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 运行测试
+        run: npm test
+
+      - name: 构建项目
+        run: npm run build
 
       # deploy the project to remote service
       - name: 部署到服务器
