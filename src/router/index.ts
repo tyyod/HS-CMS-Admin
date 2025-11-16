@@ -13,6 +13,12 @@ const routes: RouteRecordRaw[] = [
     redirect: '/admin/dashboard'
   },
   {
+    // 文章编辑页面 - 独立页面，不显示菜单
+    path: '/article/edit/:id?',
+    name: 'ArticleEdit',
+    component: () => import('../views/article/articleEdit.vue')
+  },
+  {
     path: '/admin',
     component: Admin,
     children: [
@@ -24,7 +30,22 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'article',
         name: 'Article',
-        component: { template: '<div class="welcome">文章管理<br>这里可以管理所有文章。</div>' }
+        component: () => import('../views/article/articleList.vue')
+      },
+      {
+        path: 'article-category',
+        name: 'ArticleCategory',
+        component: () => import('../views/article/articleCategory.vue')
+      },
+      {
+        path: 'article-author',
+        name: 'ArticleAuthor',
+        component: () => import('../views/article/articleAuthor.vue')
+      },
+      {
+        path: 'tag',
+        name: 'Tag',
+        component: () => import('../views/tag/tagList.vue')
       },
       {
         path: 'ebook',

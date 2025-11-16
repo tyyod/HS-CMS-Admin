@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>API接口文档</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    h2 { color: #2c3e50; }
+    h3 { color: #34495e; margin-top: 1.5em; }
+    pre, code { background: #f8f8f8; padding: 8px; border-radius: 4px; }
+    ul { margin-bottom: 1em; }
+    .section { margin-bottom: 2em; }
+    .auth-required { color: #e74c3c; font-weight: bold; }
+    .admin-only { color: #8e44ad; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>HS-CMS API接口文档</h1>
+
+  <div class="section">
+    <h2>1. 获取文章列表（后台）</h2>
+    <pre>GET /api/admin/articles/list</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数：</b>
+    <ul>
+      <li>page (int, 可选)：页码，默认1</li>
+      <li>page_size (int, 可选)：每页数量，默认10</li>
+      <li>category_id (int, 可选)：分类ID</li>
+      <li>tag_id (int, 可选)：标签ID</li>
+      <li>order (string, 可选)：排序方式（latest/recommend/hot）</li>
+      <li>keyword (string, 可选)：关键词搜索</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "list": [
+      {
+        "id": "b71def84313d",
+        "title": "文章标题",
+        "abstract": "摘要内容",
+        "cover_url": "https://xxx.jpg",
+        "author": { "id": 1, "name": "张三", "avatar": "https://xxx.png" },
+        "category": { "id": 1, "name": "前端" },
+        "tags": [{ "id": 1, "name": "Vue" }],
+        "view_count": 100,
+        "like_count": 10,
+        "created_at": "2024-06-01 12:00:00"
+      }
+    ],
+    "total": 100
+  }
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>2. 获取文章详情</h2>
+    <pre>GET /api/articles/{id}</pre>
+    <b>请求参数：</b>
+    <ul><li>id (string)：文章ID（Hashids编码）</li></ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": "b71def84313d",
+    "title": "文章标题",
+    "abstract": "摘要内容",
+    "content": "<p>正文内容</p>",
+    "content_format": "html",
+    "cover_url": "https://xxx.jpg",
+    "author": { "id": 1, "name": "张三", "avatar": "https://xxx.png" },
+    "category": { "id": 1, "name": "前端" },
+    "tags": [{ "id": 1, "name": "Vue" }],
+    "view_count": 100,
+    "like_count": 10,
+    "original_url": "https://original.com/article/123",
+    "created_at": "2024-06-01 12:00:00"
+  }
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>3. 获取文章排行榜</h2>
+    <pre>GET /api/articles/rank</pre>
+    <b>请求参数：</b>
+    <ul>
+      <li>type (string, 可选)：榜单类型（hot/like）</li>
+      <li>limit (int, 可选)：返回数量，默认10</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    {
+      "id": "b71def84313d",
+      "title": "文章标题",
+      "view_count": 1000,
+      "like_count": 200
+    }
+  ]
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>4. 获取分类列表</h2>
+    <pre>GET /api/categories</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    { "id": 1, "name": "前端" },
+    { "id": 2, "name": "后端" }
+  ]
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>5. 获取标签列表</h2>
+    <pre>GET /api/tags/list</pre>
+    <span class="auth-required">需要登录</span>
+    <b>请求参数：</b>
+    <ul>
+      <li>module (int, 可选)：模块（0通用，1文章）</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "Vue",
+      "module": 1,
+      "status": 1,
+      "created_at": "2024-06-01 12:00:00"
+    }
+  ]
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>6. 新增文章（后台）</h2>
+    <pre>POST /api/admin/articles/add</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "title": "文章标题",
+  "brief": "摘要内容",
+  "content": "# 正文内容",
+  "content_format": "md",
+  "cover_url": "https://xxx.jpg",
+  "author_id": 1,
+  "category_id": 1,
+  "tag_ids": [1, 2],
+  "original_url": "https://original.com/article/123"
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "文章创建成功",
+  "data": { "hash_id": "b71def84313d" }
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>7. 修改文章（后台）</h2>
+    <pre>PUT /api/admin/articles/{hash_id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "title": "新标题",
+  "brief": "新摘要",
+  "content": "新内容",
+  "content_format": "md",
+  "cover_url": "https://xxx.jpg",
+  "author_id": 1,
+  "category_id": 1,
+  "tag_ids": [1, 2],
+  "original_url": "https://original.com/article/123"
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "文章更新成功",
+  "data": null
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>8. 删除文章（后台）</h2>
+    <pre>DELETE /api/admin/articles/{hash_id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "文章删除成功",
+  "data": null
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>9. 后台分类管理</h2>
+    <h3>9.1 获取分类列表（后台）</h3>
+    <pre>GET /api/admin/article/categories/list</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数：</b>
+    <ul>
+      <li>page (int, 可选)：页码，默认1</li>
+      <li>page_size (int, 可选)：每页数量，默认10</li>
+      <li>name (string, 可选)：分类名称模糊搜索</li>
+      <li>status (int, 可选)：状态（1正常，0禁用）</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "获取分类列表成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "name": "前端技术",
+        "sort": 1,
+        "status": 1,
+        "created_at": "2024-06-01 12:00:00",
+        "updated_at": "2024-06-01 12:00:00"
+      }
+    ],
+    "total": 10,
+    "page": 1,
+    "page_size": 10
+  }
+}
+</pre>
+
+    <h3>9.2 创建分类（后台）</h3>
+    <pre>POST /api/admin/article/categories/add</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "分类名称",
+  "sort": 1,
+  "status": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "创建分类成功",
+  "data": {
+    "id": 1,
+    "name": "分类名称",
+    "sort": 1,
+    "status": 1,
+    "created_at": "2024-06-01 12:00:00"
+  }
+}
+</pre>
+
+    <h3>9.3 更新分类（后台）</h3>
+    <pre>PUT /api/admin/article/categories/{id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "新分类名称",
+  "sort": 2,
+  "status": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "更新分类成功",
+  "data": null
+}
+</pre>
+
+    <h3>9.4 删除分类（后台）</h3>
+    <pre>DELETE /api/admin/article/categories/{id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "删除分类成功",
+  "data": null
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>10. 用户管理</h2>
+    <h3>10.1 用户登录</h3>
+    <pre>POST /api/user/login</pre>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "username": "用户名",
+  "password": "密码"
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "登录成功",
+  "data": {
+    "id": 1,
+    "username": "admin",
+    "email": "a***@example.com",
+    "mobile": "138****8888"
+  }
+}
+</pre>
+
+    <h3>10.2 获取用户资料</h3>
+    <pre>GET /api/user/profile</pre>
+    <span class="auth-required">需要登录</span>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 1,
+    "username": "admin",
+    "nickName": "admin",
+    "email": "a***@example.com",
+    "mobile": "138****8888",
+    "isStaff": true,
+    "status": 1
+  }
+}
+</pre>
+
+    <h3>10.3 修改密码</h3>
+    <pre>POST /api/user/change-password</pre>
+    <span class="auth-required">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "old_password": "旧密码",
+  "new_password": "新密码"
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "密码修改成功",
+  "data": null
+}
+</pre>
+
+    <h3>10.4 用户登出</h3>
+    <pre>POST /api/user/logout</pre>
+    <span class="auth-required">需要登录</span>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "登出成功",
+  "data": null
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>11. 电子书管理</h2>
+    <h3>11.1 获取电子书列表</h3>
+    <pre>GET /api/ebook/list</pre>
+    <b>请求参数：</b>
+    <ul>
+      <li>page (int, 可选)：页码，默认1</li>
+      <li>pageSize (int, 可选)：每页数量，默认10</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "total": 50,
+    "page": 1,
+    "pageSize": 10,
+    "items": [
+      {
+        "id": 1,
+        "title": "电子书标题",
+        "cover": "https://example.com/covers/ebook1.jpg",
+        "author": "作者",
+        "price": 29.9,
+        "description": "电子书描述",
+        "createdAt": "2023-03-01T10:00:00Z"
+      }
+    ]
+  }
+}
+</pre>
+
+    <h3>11.2 获取电子书详情</h3>
+    <pre>GET /api/ebook/{id}</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "id": 1,
+    "title": "电子书标题",
+    "cover": "https://example.com/covers/ebook1.jpg",
+    "author": "作者",
+    "price": 29.9,
+    "description": "电子书描述",
+    "toc": [
+      {"title": "第一章", "level": 1, "page": 1},
+      {"title": "1.1 小节", "level": 2, "page": 2}
+    ],
+    "createdAt": "2023-03-01T10:00:00Z",
+    "tags": ["标签1", "标签2"]
+  }
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>12. 标签管理</h2>
+    <h3>12.1 获取标签列表</h3>
+    <pre>GET /api/tags/list</pre>
+    <span class="auth-required">需要登录</span>
+    <b>请求参数：</b>
+    <ul>
+      <li>module (int, 可选)：模块（0通用，1文章）</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": [
+    {
+      "id": 1,
+      "name": "Vue",
+      "module": 1,
+      "status": 1,
+      "created_at": "2024-06-01 12:00:00"
+    }
+  ]
+}
+</pre>
+
+    <h3>12.2 创建标签</h3>
+    <pre>POST /api/tags/add</pre>
+    <span class="auth-required">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "标签名称",
+  "module": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "创建标签成功",
+  "data": {
+    "id": 1,
+    "name": "标签名称",
+    "module": 1,
+    "status": 1
+  }
+}
+</pre>
+
+    <h3>12.3 更新标签</h3>
+    <pre>PUT /api/tags/{id}</pre>
+    <span class="auth-required">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "新标签名称",
+  "module": 1,
+  "status": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "更新标签成功",
+  "data": null
+}
+</pre>
+
+    <h3>12.4 删除标签</h3>
+    <pre>DELETE /api/tags/{id}</pre>
+    <span class="auth-required">需要登录</span>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "删除标签成功",
+  "data": null
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>13. 后台标签管理</h2>
+    <h3>13.1 获取标签列表（后台）</h3>
+    <pre>GET /api/admin/tags/list</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数：</b>
+    <ul>
+      <li>page (int, 可选)：页码，默认1</li>
+      <li>page_size (int, 可选)：每页数量，默认10</li>
+      <li>name (string, 可选)：标签名称模糊搜索</li>
+      <li>module (int, 可选)：模块（0通用，1文章）</li>
+      <li>status (int, 可选)：状态（1正常，0禁用）</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "获取标签列表成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "name": "Vue",
+        "module": 1,
+        "status": 1,
+        "created_at": "2024-06-01 12:00:00",
+        "updated_at": "2024-06-01 12:00:00"
+      }
+    ],
+    "total": 10,
+    "page": 1,
+    "page_size": 10
+  }
+}
+</pre>
+
+    <h3>13.2 创建标签（后台）</h3>
+    <pre>POST /api/admin/tags/add</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "标签名称",
+  "module": 1,
+  "status": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "创建标签成功",
+  "data": {
+    "id": 1,
+    "name": "标签名称",
+    "module": 1,
+    "status": 1,
+    "created_at": "2024-06-01 12:00:00"
+  }
+}
+</pre>
+
+    <h3>13.3 更新标签（后台）</h3>
+    <pre>PUT /api/admin/tags/{id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "新标签名称",
+  "module": 1,
+  "status": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "更新标签成功",
+  "data": null
+}
+</pre>
+
+    <h3>13.4 删除标签（后台）</h3>
+    <pre>DELETE /api/admin/tags/{id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "删除标签成功",
+  "data": null
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>14. 后台作者管理</h2>
+    <h3>14.1 获取作者列表（后台）</h3>
+    <pre>GET /api/admin/authors/list</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数：</b>
+    <ul>
+      <li>page (int, 可选)：页码，默认1</li>
+      <li>page_size (int, 可选)：每页数量，默认10</li>
+      <li>name (string, 可选)：作者名称模糊搜索</li>
+      <li>author_type (int, 可选)：作者类型（1站内用户，2站外作者）</li>
+      <li>status (int, 可选)：状态（1正常，0禁用）</li>
+    </ul>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "获取作者列表成功",
+  "data": {
+    "list": [
+      {
+        "id": 1,
+        "name": "张三",
+        "avatar": "https://example.com/avatar.jpg",
+        "user_id": 1,
+        "author_type": 1,
+        "status": 1,
+        "created_at": "2024-06-01 12:00:00",
+        "updated_at": "2024-06-01 12:00:00"
+      }
+    ],
+    "total": 10,
+    "page": 1,
+    "page_size": 10
+  }
+}
+</pre>
+
+    <h3>14.2 创建作者（后台）</h3>
+    <pre>POST /api/admin/authors/add</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "作者名称",
+  "avatar": "https://example.com/avatar.jpg",
+  "user_id": 1,
+  "author_type": 1,
+  "status": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "创建作者成功",
+  "data": {
+    "id": 1,
+    "name": "作者名称",
+    "avatar": "https://example.com/avatar.jpg",
+    "user_id": 1,
+    "author_type": 1,
+    "status": 1,
+    "created_at": "2024-06-01 12:00:00"
+  }
+}
+</pre>
+
+    <h3>14.3 更新作者（后台）</h3>
+    <pre>PUT /api/admin/authors/{id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>请求参数（JSON）：</b>
+    <pre>{
+  "name": "新作者名称",
+  "avatar": "https://example.com/new-avatar.jpg",
+  "user_id": 2,
+  "author_type": 2,
+  "status": 1
+}
+</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "更新作者成功",
+  "data": null
+}
+</pre>
+
+    <h3>14.4 删除作者（后台）</h3>
+    <pre>DELETE /api/admin/authors/{id}</pre>
+    <span class="admin-only">需要登录</span>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "删除作者成功",
+  "data": null
+}
+</pre>
+  </div>
+
+  <div class="section">
+    <h2>15. 系统接口</h2>
+    <h3>15.1 健康检查</h3>
+    <pre>GET /health</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "服务正常运行",
+  "data": {
+    "status": "ok"
+  }
+}
+</pre>
+
+    <h3>15.2 获取API信息</h3>
+    <pre>GET /api/info</pre>
+    <b>返回示例：</b>
+    <pre>{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "name": "HS-CMS API",
+    "version": "1.0.0",
+    "db_host": "localhost:3306"
+  }
+}
+</pre>
+  </div>
+
+</body>
+</html>

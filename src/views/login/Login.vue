@@ -3,7 +3,7 @@
     <canvas id="bg-canvas"></canvas>
     <div class="login-form-side">
       <div class="login-card">
-        <div class="login-title">欢迎使用HSCMS</div>
+        <div class="login-title">三角猫CMS</div>
         <div class="login-desc">高效内容管理，安全便捷登录</div>
         <el-form :model="form" ref="loginFormRef" class="login-form" @submit.prevent="onSubmit">
           <el-form-item style="margin-bottom:22px;position:relative;width:276px;display:block;">

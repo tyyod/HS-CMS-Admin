@@ -24,7 +24,7 @@ client.defaults.timeout = 30000
 
 client.interceptors.response.use(
     response => {
-        if (response.status === 200) {
+        if (response.status === 200 || response.status === 201) {
             if (response?.data?.code === 0) {
                 return response.data;
             } else {
