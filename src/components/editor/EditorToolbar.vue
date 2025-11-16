@@ -8,17 +8,8 @@
         <ArrowForwardUp :size="24" />
       </el-button>
       <div class="toolbar-divider"></div>
-      <el-button text @click="handlePaste" title="粘贴">
-        <Icon icon="fluent:clipboard-paste-24-filled" style="width: 24px; height: 24px;" />
-      </el-button>
-      <el-button text @click="handleParagraph" title="段落">
-        <el-icon :size="24"><Document /></el-icon>
-      </el-button>
-    </div>
-
-    <div class="toolbar-group">
       <el-button text @click="handleHeading" title="标题 (H1/H2)">
-        H
+        <IconHeading :size="24" />
       </el-button>
       <el-button 
         text 
@@ -26,7 +17,7 @@
         title="加粗"
         :class="{ 'is-active': isBold }"
       >
-        <strong>B</strong>
+        <IconBold :size="24" />
       </el-button>
       <el-button 
         text 
@@ -34,7 +25,7 @@
         title="斜体"
         :class="{ 'is-active': isItalic }"
       >
-        <em>I</em>
+        <IconItalic :size="24" />
       </el-button>
       <el-button 
         text 
@@ -42,7 +33,7 @@
         title="下划线"
         :class="{ 'is-active': isUnderline }"
       >
-        <u>U</u>
+        <Icon icon="fluent:text-underline-20-filled" style="width: 24px; height: 24px;" />
       </el-button>
       <el-button 
         text 
@@ -50,7 +41,7 @@
         title="删除线"
         :class="{ 'is-active': isStrike }"
       >
-        <s>S</s>
+        <IconStrikethrough :size="24" />
       </el-button>
       <el-button 
         text 
@@ -58,89 +49,133 @@
         title="引用"
         :class="{ 'is-active': isBlockquote }"
       >
-        <el-icon :size="24"><ChatLineSquare /></el-icon>
+        <Icon icon="carbon:quotes" style="width: 24px; height: 24px;" />
       </el-button>
-    </div>
-
-    <div class="toolbar-group">
-      <el-button 
-        text 
-        @click="handleBulletList" 
-        title="无序列表"
-        :class="{ 'is-active': isBulletList }"
-      >
-        <el-icon :size="24"><List /></el-icon>
-      </el-button>
-      <el-button 
-        text 
-        @click="handleNumberedList" 
-        title="有序列表"
-        :class="{ 'is-active': isOrderedList }"
-      >
-        <span style="font-weight: bold;">1.</span>
-      </el-button>
-      <el-button text @click="handleAlignLeft" title="左对齐">
-        <span style="font-size: 14px;">←</span>
-      </el-button>
-      <el-button text @click="handleAlignCenter" title="居中">
-        <span style="font-size: 14px;">↔</span>
-      </el-button>
-      <el-button text @click="handleAlignRight" title="右对齐">
-        <span style="font-size: 14px;">→</span>
-      </el-button>
-      <el-button text @click="handleAlignJustify" title="两端对齐">
-        <span style="font-size: 14px;">⇄</span>
-      </el-button>
-    </div>
-
-    <div class="toolbar-group">
+      <el-dropdown trigger="click" @command="handleListCommand">
+        <el-button 
+          text 
+          title="列表"
+          :class="{ 'is-active': isBulletList || isOrderedList }"
+        >
+          <IconList :size="24" />
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="bullet">
+              <div class="dropdown-item">
+                <IconList :size="20" />
+                <span>无序列表</span>
+              </div>
+            </el-dropdown-item>
+            <el-dropdown-item command="ordered">
+              <div class="dropdown-item">
+                <el-icon :size="20"><FormatListNumberedRound /></el-icon>
+                <span>有序列表</span>
+              </div>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <el-button text @click="handleLink" title="链接">
-        <el-icon :size="24"><Link /></el-icon>
+        <IconLink :size="24" />
       </el-button>
-      <el-button 
-        text 
-        @click="handleCode" 
-        title="行内代码"
-        :class="{ 'is-active': isCode }"
-      >
-        &lt;/&gt;
-      </el-button>
+      <el-dropdown trigger="click" @command="handleCodeCommand">
+        <el-button 
+          text 
+          title="代码"
+          :class="{ 'is-active': isCode || isCodeBlock }"
+        >
+          <IconCode :size="24" />
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="inline">
+              <div class="dropdown-item">
+                <IconCode :size="20" />
+                <span>行内代码</span>
+              </div>
+            </el-dropdown-item>
+            <el-dropdown-item command="block">
+              <div class="dropdown-item">
+                <IconBraces :size="20" />
+                <span>代码块</span>
+              </div>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <el-button text @click="handleImage" title="图片">
         <el-icon :size="24"><Picture /></el-icon>
-      </el-button>
-      <el-button text @click="handleEmoji" title="表情">
-        ☺
       </el-button>
       <el-button text @click="handleTable" title="表格">
         <el-icon :size="24"><Grid /></el-icon>
       </el-button>
-    </div>
-
-    <div class="toolbar-group">
-      <el-button text @click="handleMore" title="更多">
-        <el-icon :size="24"><More /></el-icon>
+      <el-button text @click="handleEmoji" title="表情">
+        <Icon icon="fluent:emoji-28-regular" style="width: 24px; height: 24px;" />
       </el-button>
-      <el-button text @click="handleDocument" title="文档">
-        <el-icon :size="24"><Document /></el-icon>
-      </el-button>
+      <el-dropdown trigger="click" @command="handleMoreCommand">
+        <el-button text title="更多">
+          <el-icon :size="24"><More /></el-icon>
+        </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="document">
+              <div class="dropdown-item">
+                <el-icon :size="20"><Document /></el-icon>
+                <span>文档</span>
+              </div>
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
+    
+    <!-- 表情选择器弹窗 -->
+    <el-dialog
+      v-model="emojiDialogVisible"
+      title="选择表情"
+      width="400px"
+      :close-on-click-modal="true"
+    >
+      <div class="emoji-picker">
+        <div class="emoji-grid">
+          <span
+            v-for="emoji in emojiList"
+            :key="emoji"
+            class="emoji-item"
+            @click="insertEmoji(emoji)"
+          >
+            {{ emoji }}
+          </span>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { ElButton, ElIcon } from 'element-plus';
+import { computed, ref } from 'vue';
+import { ElButton, ElIcon, ElDropdown, ElDropdownMenu, ElDropdownItem, ElDialog } from 'element-plus';
 import {
   Document,
-  ChatLineSquare,
-  List,
-  Link,
   Picture,
   Grid,
   More
 } from '@element-plus/icons-vue';
-import { IconArrowBackUp as ArrowBackUp, IconArrowForwardUp as ArrowForwardUp } from '@tabler/icons-vue';
+import { 
+  IconArrowBackUp as ArrowBackUp, 
+  IconArrowForwardUp as ArrowForwardUp,
+  IconHeading,
+  IconBold,
+  IconItalic,
+  IconStrikethrough,
+  IconList,
+  IconLink,
+  IconCode,
+  IconBraces
+} from '@tabler/icons-vue';
 import { Icon } from '@iconify/vue';
+import { FormatListNumberedRound } from '@vicons/material';
 
 const props = defineProps({
   editor: {
@@ -155,20 +190,6 @@ const handleUndo = () => {
 
 const handleRedo = () => {
   props.editor?.chain().focus().redo().run();
-};
-
-const handlePaste = () => {
-  // 粘贴功能由浏览器原生支持，这里可以添加自定义处理
-  navigator.clipboard.readText().then(text => {
-    props.editor?.chain().focus().insertContent(text).run();
-  }).catch(() => {
-    // 如果剪贴板 API 不可用，使用默认粘贴
-    document.execCommand('paste');
-  });
-};
-
-const handleParagraph = () => {
-  props.editor?.chain().focus().setParagraph().run();
 };
 
 const handleHeading = () => {
@@ -196,28 +217,12 @@ const handleQuote = () => {
   props.editor?.chain().focus().toggleBlockquote().run();
 };
 
-const handleBulletList = () => {
-  props.editor?.chain().focus().toggleBulletList().run();
-};
-
-const handleNumberedList = () => {
-  props.editor?.chain().focus().toggleOrderedList().run();
-};
-
-const handleAlignLeft = () => {
-  props.editor?.chain().focus().setTextAlign('left').run();
-};
-
-const handleAlignCenter = () => {
-  props.editor?.chain().focus().setTextAlign('center').run();
-};
-
-const handleAlignRight = () => {
-  props.editor?.chain().focus().setTextAlign('right').run();
-};
-
-const handleAlignJustify = () => {
-  props.editor?.chain().focus().setTextAlign('justify').run();
+const handleListCommand = (command) => {
+  if (command === 'bullet') {
+    props.editor?.chain().focus().toggleBulletList().run();
+  } else if (command === 'ordered') {
+    props.editor?.chain().focus().toggleOrderedList().run();
+  }
 };
 
 const handleLink = () => {
@@ -227,8 +232,12 @@ const handleLink = () => {
   }
 };
 
-const handleCode = () => {
-  props.editor?.chain().focus().toggleCode().run();
+const handleCodeCommand = (command) => {
+  if (command === 'inline') {
+    props.editor?.chain().focus().toggleCode().run();
+  } else if (command === 'block') {
+    props.editor?.chain().focus().toggleCodeBlock().run();
+  }
 };
 
 const handleImage = () => {
@@ -238,23 +247,49 @@ const handleImage = () => {
   }
 };
 
-const handleEmoji = () => {
-  // 表情功能可以后续扩展
-  console.log('Emoji feature');
+const emojiDialogVisible = ref(false);
+
+const emojiList = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃',
+  '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙',
+  '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔',
+  '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥',
+  '😌', '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮',
+  '🤧', '🥵', '🥶', '😶‍🌫️', '😵', '😵‍💫', '🤯', '🤠', '🥳', '😎',
+  '🤓', '🧐', '😕', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳',
+  '🥺', '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖',
+  '😣', '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬',
+  '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽',
+  '👾', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿',
+  '😾', '🙈', '🙉', '🙊', '💋', '💌', '💘', '💝', '💖', '💗',
+  '💓', '💞', '💕', '💟', '❣️', '💔', '❤️', '🧡', '💛', '💚',
+  '💙', '💜', '🖤', '🤍', '🤎', '💯', '💢', '💥', '💫', '💦',
+  '💨', '🕳️', '💣', '💬', '👁️‍🗨️', '🗨️', '🗯️', '💭', '💤', '👋',
+  '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟',
+  '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎',
+  '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏',
+  '✍️', '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻',
+  '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄'
+];
+
+const insertEmoji = (emoji) => {
+  props.editor?.chain().focus().insertContent(emoji).run();
+  emojiDialogVisible.value = false;
 };
 
 const handleTable = () => {
   props.editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 };
 
-const handleMore = () => {
-  // 更多功能可以后续扩展
-  console.log('More features');
+const handleEmoji = () => {
+  emojiDialogVisible.value = true;
 };
 
-const handleDocument = () => {
-  // 文档功能可以后续扩展
-  console.log('Document feature');
+const handleMoreCommand = (command) => {
+  if (command === 'document') {
+    // 文档功能可以后续扩展
+    console.log('Document feature');
+  }
 };
 
 // 计算按钮激活状态
@@ -267,17 +302,19 @@ const isBulletList = computed(() => props.editor?.isActive('bulletList'));
 const isOrderedList = computed(() => props.editor?.isActive('orderedList'));
 const isBlockquote = computed(() => props.editor?.isActive('blockquote'));
 const isCode = computed(() => props.editor?.isActive('code'));
+const isCodeBlock = computed(() => props.editor?.isActive('codeBlock'));
 </script>
 
 <style scoped>
 .editor-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: 2px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
   background-color: #ffffff;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -307,14 +344,16 @@ const isCode = computed(() => props.editor?.isActive('code'));
 .toolbar-group {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .toolbar-divider {
   width: 1px;
   height: 20px;
   background-color: #e5e7eb;
-  margin: 0 4px;
+  margin: 0 2px;
+  flex-shrink: 0;
   transition: background-color 0.3s ease;
 }
 
@@ -399,6 +438,58 @@ const isCode = computed(() => props.editor?.isActive('code'));
 :deep(.el-button.is-text.is-active svg),
 :deep(.el-button.is-text.is-active .iconify) {
   color: var(--el-color-primary);
+}
+
+/* 下拉菜单项样式 */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+}
+
+.dropdown-item .el-icon {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 表情选择器样式 */
+.emoji-picker {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  padding: 8px;
+}
+
+.emoji-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.emoji-item:hover {
+  background-color: var(--el-fill-color-light);
+}
+
+.dark .emoji-item:hover {
+  background-color: var(--el-fill-color-dark);
 }
 </style>
 
