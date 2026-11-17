@@ -5,7 +5,14 @@
       <div class="login-card">
         <div class="login-title">三角猫CMS</div>
         <div class="login-desc">高效内容管理，安全便捷登录</div>
-        <el-form :model="form" ref="loginFormRef" class="login-form" @submit.prevent="onSubmit">
+
+        <!-- 密码步骤 -->
+        <el-form
+          v-if="step === 'credentials'"
+          :model="form"
+          class="login-form"
+          @submit.prevent="onSubmit"
+        >
           <el-form-item style="margin-bottom:22px;position:relative;width:276px;display:block;">
             <el-input
               v-model="form.username"
@@ -17,9 +24,9 @@
             >
               <template #prefix>
                 <span style="display:flex;align-items:center;">
-                    <Icon class="w-[18px] h-[18px] text-[#b0b3b8] !important">
-                        <MdPerson/>
-                    </Icon>
+                  <Icon class="w-[18px] h-[18px] text-[#b0b3b8] !important">
+                    <MdPerson/>
+                  </Icon>
                   <span style="display:inline-block;width:1px;height:16px;background:#e5e7eb;margin:0 8px 0 6px;"></span>
                 </span>
               </template>
@@ -37,9 +44,9 @@
             >
               <template #prefix>
                 <span style="display:flex;align-items:center;">
-                    <Icon class="w-[18px] h-[18px] text-[#b0b3b8] !important">
-                        <MdLock/>
-                    </Icon>
+                  <Icon class="w-[18px] h-[18px] text-[#b0b3b8] !important">
+                    <MdLock/>
+                  </Icon>
                   <span style="display:inline-block;width:1px;height:16px;background:#e5e7eb;margin:0 8px 0 6px;"></span>
                 </span>
               </template>
@@ -52,15 +59,68 @@
               </template>
             </el-input>
           </el-form-item>
-          <div id="login-error" v-if="errorMsg" style="height:16px;color:#f56c6c;font-size:12px;margin-bottom:6px;margin-top:-14px;text-align:left;line-height:16px;padding-left:2px;">{{ errorMsg }}</div>
+          <div
+            v-if="errorMsg"
+            style="height:16px;color:#f56c6c;font-size:12px;margin-bottom:6px;margin-top:-14px;text-align:left;line-height:16px;padding-left:2px;"
+          >{{ errorMsg }}</div>
           <el-form-item style="margin-bottom:0;">
             <el-button
               type="primary"
               class="login-btn"
-              :disabled="!canSubmit"
+              :disabled="!canSubmit || submitting"
               native-type="submit"
-              >登录</el-button>
+            >登录</el-button>
           </el-form-item>
+        </el-form>
+
+        <!-- MFA 步骤 -->
+        <el-form
+          v-else
+          :model="mfaForm"
+          class="login-form"
+          @submit.prevent="onSubmitMfa"
+        >
+          <template v-if="mfaAction === 'bind'">
+            <div class="mfa-tip">请使用验证器扫描下方二维码，完成绑定</div>
+            <div class="mfa-qr">
+              <img v-if="bindInfo" :src="bindInfo.qr_code" alt="MFA 二维码" width="200" height="200" />
+            </div>
+            <div class="mfa-secret">
+              <span class="mfa-secret-label">密钥</span>
+              <el-input :model-value="bindInfo?.secret" readonly style="width: 176px;" />
+              <el-button link type="primary" @click="copySecret">复制</el-button>
+            </div>
+          </template>
+          <template v-else>
+            <div class="mfa-tip">请输入验证器中的 6 位验证码</div>
+          </template>
+
+          <el-form-item style="margin-bottom:22px;position:relative;width:276px;display:block;">
+            <el-input
+              v-model="mfaCode"
+              placeholder="6 位验证码"
+              maxlength="6"
+              autocomplete="one-time-code"
+              @input="clearError"
+              clearable
+              style="width: 276px;"
+            />
+          </el-form-item>
+          <div
+            v-if="errorMsg"
+            style="height:16px;color:#f56c6c;font-size:12px;margin-bottom:6px;margin-top:-14px;text-align:left;line-height:16px;padding-left:2px;"
+          >{{ errorMsg }}</div>
+          <el-form-item style="margin-bottom:12px;">
+            <el-button
+              type="primary"
+              class="login-btn"
+              :disabled="mfaCode.length !== 6 || submitting"
+              native-type="submit"
+            >{{ mfaAction === 'bind' ? '确认绑定' : '登录' }}</el-button>
+          </el-form-item>
+          <div class="mfa-back">
+            <el-button link type="info" @click="backToCredentials">返回重新登录</el-button>
+          </div>
         </el-form>
       </div>
     </div>
@@ -68,9 +128,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { loginUser } from '../../api/index';
+import { loginUser, verifyMfa } from '../../api/index';
+import type { LoginData } from '../../api/index';
 import { Icon } from '@vicons/utils'
 import { MdEye, MdEyeOff, MdPerson, MdLock } from '@vicons/ionicons4';
 
@@ -80,9 +141,19 @@ const form = reactive({
   username: '',
   password: ''
 });
+const mfaForm = reactive({ mfa_code: '' });
 const errorMsg = ref('');
 const passwordVisible = ref(false);
-const loginFormRef = ref();
+const originalDarkMode = ref(false);
+
+type Step = 'credentials' | 'mfa';
+type MfaAction = 'bind' | 'verify';
+
+const step = ref<Step>('credentials');
+const mfaAction = ref<MfaAction>('verify');
+const bindInfo = ref<{ secret: string; qr_code: string } | null>(null);
+const mfaCode = ref('');
+const submitting = ref(false);
 
 const canSubmit = computed(() => {
   return form.username && form.password && form.password.length >= 8;
@@ -96,6 +167,15 @@ function togglePassword() {
   passwordVisible.value = !passwordVisible.value;
 }
 
+function redirectAfterLogin() {
+  const redirect = route.query.redirect as string;
+  if (redirect) {
+    router.replace(redirect);
+  } else {
+    router.replace('/');
+  }
+}
+
 async function onSubmit() {
   if (!form.username || !form.password) {
     errorMsg.value = '请输入用户名和密码';
@@ -105,23 +185,80 @@ async function onSubmit() {
     errorMsg.value = '密码长度不能少于8位';
     return;
   }
+  submitting.value = true;
   try {
-    await loginUser({ username: form.username, password: form.password });
-    errorMsg.value = '';
-    // 登录成功后跳转
-    const redirect = route.query.redirect as string;
-    if (redirect) {
-      router.replace(redirect);
-    } else {
-      router.replace('/');
+    const res = (await loginUser({
+      username: form.username,
+      password: form.password
+    })) as unknown as { data: LoginData };
+    const data = res.data;
+    if (data && 'mfa_required' in data && data.mfa_required) {
+      if (data.mfa_action === 'bind') {
+        bindInfo.value = { secret: data.secret, qr_code: data.qr_code };
+        mfaAction.value = 'bind';
+      } else {
+        bindInfo.value = null;
+        mfaAction.value = 'verify';
+      }
+      mfaCode.value = '';
+      errorMsg.value = '';
+      step.value = 'mfa';
+      return;
     }
+    errorMsg.value = '';
+    redirectAfterLogin();
   } catch (e: any) {
-    if (e?.data) {
-      errorMsg.value = e.data.msg || '用户名或密码错误';
+    if (e?.data?.msg) {
+      errorMsg.value = e.data.msg;
     } else {
       errorMsg.value = '网络异常，请检查服务是否可用';
     }
+  } finally {
+    submitting.value = false;
   }
+}
+
+async function onSubmitMfa() {
+  if (!form.username) {
+    backToCredentials();
+    return;
+  }
+  if (mfaCode.value.length !== 6) {
+    errorMsg.value = '请输入 6 位验证码';
+    return;
+  }
+  submitting.value = true;
+  try {
+    await verifyMfa({ username: form.username, mfa_code: mfaCode.value });
+    errorMsg.value = '';
+    redirectAfterLogin();
+  } catch (e: any) {
+    if (e?.status === 400) {
+      errorMsg.value = e?.data?.msg || '绑定已过期，请重新登录';
+      backToCredentials();
+      return;
+    }
+    errorMsg.value = e?.data?.msg || '验证码错误';
+    mfaCode.value = '';
+  } finally {
+    submitting.value = false;
+  }
+}
+
+async function copySecret() {
+  if (!bindInfo.value?.secret) return;
+  try {
+    await navigator.clipboard.writeText(bindInfo.value.secret);
+  } catch {
+    // 忽略复制失败
+  }
+}
+
+function backToCredentials() {
+  step.value = 'credentials';
+  mfaCode.value = '';
+  bindInfo.value = null;
+  errorMsg.value = '';
 }
 
 /**
@@ -188,11 +325,34 @@ function setupBackgroundAnimation() {
 }
 
 onMounted(() => {
+  // 强制禁用 dark 模式
+  const html = document.documentElement;
+  originalDarkMode.value = html.classList.contains('dark');
+  html.classList.remove('dark');
+  // 确保 body 背景为白色
+  // document.body.style.backgroundColor = '#ffffff';
+  // document.body.style.color = '#333333';
+  
   setupBackgroundAnimation();
+});
+
+onUnmounted(() => {
+  // 恢复原始 dark 模式状态（如果需要）
+  if (originalDarkMode.value) {
+    const html = document.documentElement;
+    html.classList.add('dark');
+    // document.body.style.backgroundColor = '#1a1a1a';
+    // document.body.style.color = '#ffffff';
+  }
 });
 </script>
 
 <style scoped>
+/* 强制 light 模式，禁用 dark 模式 */
+.login-wrapper :deep(.el-input__inner) {
+  color: #333 !important;
+}
+
 .login-wrapper {
   position: fixed;
   left: 0;
@@ -222,7 +382,7 @@ onMounted(() => {
   align-items: center;
 }
 .login-card {
-  background: #fff;
+  background: #fff !important;
   border-radius: 14px;
   box-shadow: 0 4px 24px rgba(60, 60, 120, 0.13);
   padding: 38px 32px 32px 32px;
@@ -291,4 +451,60 @@ onMounted(() => {
 @media (max-width: 900px) {
   .login-card { width: 98vw; min-width: 0; padding: 32px 8vw; }
 }
-</style> 
+
+/* 覆盖 dark 模式下的所有样式，强制使用 light 模式 */
+:deep(.el-input__wrapper) {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 1px #dcdfe6 inset !important;
+}
+
+:deep(.el-input__inner) {
+  color: #333 !important;
+}
+
+:deep(.el-button--primary) {
+  background-color: #409EFF !important;
+  border-color: #409EFF !important;
+  color: #fff !important;
+}
+
+:deep(.el-button--primary:disabled) {
+  background-color: #a0cfff !important;
+  border-color: #a0cfff !important;
+  color: #fff !important;
+}
+
+.mfa-tip {
+  width: 276px;
+  text-align: left;
+  color: #666;
+  font-size: 13px;
+  line-height: 18px;
+  margin-bottom: 14px;
+}
+.mfa-qr {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.mfa-qr img {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px;
+  background: #fff;
+}
+.mfa-secret {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.mfa-secret-label {
+  color: #999;
+  font-size: 13px;
+}
+.mfa-back {
+  text-align: center;
+}
+</style>
