@@ -87,7 +87,7 @@
             </div>
             <div class="mfa-secret">
               <span class="mfa-secret-label">密钥</span>
-              <el-input :model-value="bindInfo?.secret" readonly style="width: 176px;" />
+              <span class="mfa-secret-value">{{ bindInfo?.secret }}</span>
               <el-button link type="primary" @click="copySecret">复制</el-button>
             </div>
           </template>
@@ -101,7 +101,7 @@
               placeholder="6 位验证码"
               maxlength="6"
               autocomplete="one-time-code"
-              @input="clearError"
+              @input="onMfaInput"
               clearable
               style="width: 276px;"
             />
@@ -161,6 +161,13 @@ const canSubmit = computed(() => {
 
 function clearError() {
   errorMsg.value = '';
+}
+
+function onMfaInput(value: string) {
+  // 先将全角数字归一化为半角，再过滤非数字字符
+  const halfWidth = value.replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
+  mfaCode.value = halfWidth.replace(/\D/g, '').slice(0, 6);
+  clearError();
 }
 
 function togglePassword() {
@@ -233,13 +240,14 @@ async function onSubmitMfa() {
     errorMsg.value = '';
     redirectAfterLogin();
   } catch (e: any) {
-    if (e?.status === 400) {
-      errorMsg.value = e?.data?.msg || '绑定已过期，请重新登录';
-      backToCredentials();
-      return;
-    }
-    errorMsg.value = e?.data?.msg || '验证码错误';
+    const msg = e?.data?.msg || '验证码错误';
+    errorMsg.value = msg;
     mfaCode.value = '';
+    // 只有绑定密钥确实过期才回到密码步骤；参数格式等错误保留在 MFA 步骤重输
+    if (msg.includes('过期')) {
+      backToCredentials();
+      errorMsg.value = '绑定已过期，请重新登录';
+    }
   } finally {
     submitting.value = false;
   }
@@ -503,6 +511,17 @@ onUnmounted(() => {
 .mfa-secret-label {
   color: #999;
   font-size: 13px;
+}
+.mfa-secret-value {
+  display: inline-block;
+  width: 176px;
+  color: #333;
+  font-size: 13px;
+  font-family: monospace;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .mfa-back {
   text-align: center;
