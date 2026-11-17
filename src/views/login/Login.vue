@@ -240,14 +240,14 @@ async function onSubmitMfa() {
     errorMsg.value = '';
     redirectAfterLogin();
   } catch (e: any) {
-    const msg = e?.data?.msg || '验证码错误';
-    errorMsg.value = msg;
+    const msg = e?.data?.msg;
     mfaCode.value = '';
-    // 只有绑定密钥确实过期才回到密码步骤；参数格式等错误保留在 MFA 步骤重输
-    if (msg.includes('过期')) {
+    if (e?.status === 400 && typeof msg === 'string' && msg.includes('过期')) {
       backToCredentials();
-      errorMsg.value = '绑定已过期，请重新登录';
+      errorMsg.value = msg;
+      return;
     }
+    errorMsg.value = msg || '网络异常，请检查服务是否可用';
   } finally {
     submitting.value = false;
   }
