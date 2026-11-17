@@ -18,6 +18,7 @@ export interface MfaVerifyData {
 
 /** 登录成功数据 */
 export interface LoginUserData {
+  mfa_required?: false;
   id: number;
   username: string;
   email: string;
