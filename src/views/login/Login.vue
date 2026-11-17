@@ -192,7 +192,7 @@ async function onSubmit() {
       password: form.password
     })) as unknown as { data: LoginData };
     const data = res.data;
-    if (data && 'mfa_required' in data && data.mfa_required) {
+    if (data && data.mfa_required) {
       if (data.mfa_action === 'bind') {
         bindInfo.value = { secret: data.secret, qr_code: data.qr_code };
         mfaAction.value = 'bind';
