@@ -131,7 +131,6 @@
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { loginUser, verifyMfa } from '../../api/index';
-import type { LoginData } from '../../api/index';
 import { Icon } from '@vicons/utils'
 import { MdEye, MdEyeOff, MdPerson, MdLock } from '@vicons/ionicons4';
 
@@ -194,10 +193,10 @@ async function onSubmit() {
   }
   submitting.value = true;
   try {
-    const res = (await loginUser({
+    const res = await loginUser({
       username: form.username,
       password: form.password
-    })) as unknown as { data: LoginData };
+    });
     const data = res.data;
     if (data && data.mfa_required) {
       if (data.mfa_action === 'bind') {
