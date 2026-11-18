@@ -107,7 +107,12 @@
       <el-button text @click="handleImage" title="图片">
         <el-icon :size="24"><Picture /></el-icon>
       </el-button>
-      <el-button text @click="handleTable" title="表格">
+      <el-button 
+        text 
+        @click="handleTable" 
+        title="表格"
+        :disabled="isInTable"
+      >
         <el-icon :size="24"><Grid /></el-icon>
       </el-button>
       <el-button text @click="handleEmoji" title="表情">
@@ -150,12 +155,78 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 表格尺寸选择器弹窗 -->
+    <el-dialog
+      v-model="tableSizeDialogVisible"
+      title="选择表格尺寸"
+      width="400px"
+      :close-on-click-modal="true"
+    >
+      <el-form :model="tableSizeForm" label-width="80px">
+        <el-form-item label="行数">
+          <el-input-number
+            v-model="tableSizeForm.rows"
+            :min="1"
+            :max="20"
+            :step="1"
+          />
+        </el-form-item>
+        <el-form-item label="列数">
+          <el-input-number
+            v-model="tableSizeForm.cols"
+            :min="1"
+            :max="20"
+            :step="1"
+          />
+        </el-form-item>
+        <el-form-item label="表头">
+          <el-switch v-model="tableSizeForm.withHeaderRow" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="tableSizeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmInsertTable">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 链接插入弹窗 -->
+    <el-dialog
+      v-model="linkDialogVisible"
+      title="插入链接"
+      width="500px"
+      :close-on-click-modal="true"
+    >
+      <el-form :model="linkForm" :rules="linkRules" ref="linkFormRef" label-width="80px">
+        <el-form-item label="链接文字" prop="text" required>
+          <el-input
+            v-model="linkForm.text"
+            placeholder="填写链接文字"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="链接地址" prop="url" required>
+          <el-input
+            v-model="linkForm.url"
+            placeholder="填写链接地址"
+            clearable
+          />
+          <div class="link-form-extra">
+            <p class="hint">请勿添加与正文无关的链接</p>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="linkDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmInsertLink">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue';
-import { ElButton, ElIcon, ElDropdown, ElDropdownMenu, ElDropdownItem, ElDialog } from 'element-plus';
+import { ElButton, ElIcon, ElDropdown, ElDropdownMenu, ElDropdownItem, ElDialog, ElForm, ElFormItem, ElInputNumber, ElSwitch, ElInput, ElMessage } from 'element-plus';
 import {
   Document,
   Picture,
@@ -185,69 +256,201 @@ const props = defineProps({
 });
 
 const handleUndo = () => {
-  props.editor?.chain().focus().undo().run();
+  if (!props.editor) return;
+  props.editor.chain().focus().undo().run();
 };
 
 const handleRedo = () => {
-  props.editor?.chain().focus().redo().run();
+  if (!props.editor) return;
+  props.editor.chain().focus().redo().run();
 };
 
 const handleHeading = () => {
-  const level = props.editor?.isActive('heading', { level: 1 }) ? 2 : 1;
-  props.editor?.chain().focus().toggleHeading({ level }).run();
+  if (!props.editor) return;
+  const level = props.editor.isActive('heading', { level: 1 }) ? 2 : 1;
+  props.editor.chain().focus().toggleHeading({ level }).run();
 };
 
 const handleBold = () => {
-  props.editor?.chain().focus().toggleBold().run();
+  if (!props.editor) return;
+  props.editor.chain().focus().toggleBold().run();
 };
 
 const handleItalic = () => {
-  props.editor?.chain().focus().toggleItalic().run();
+  if (!props.editor) return;
+  props.editor.chain().focus().toggleItalic().run();
 };
 
 const handleUnderline = () => {
-  props.editor?.chain().focus().toggleUnderline().run();
+  if (!props.editor) return;
+  props.editor.chain().focus().toggleUnderline().run();
 };
 
 const handleStrikethrough = () => {
-  props.editor?.chain().focus().toggleStrike().run();
+  if (!props.editor) return;
+  props.editor.chain().focus().toggleStrike().run();
 };
 
 const handleQuote = () => {
-  props.editor?.chain().focus().toggleBlockquote().run();
+  if (!props.editor) return;
+  props.editor.commands.focus();
+  props.editor.commands.toggleBlockquote();
 };
 
 const handleListCommand = (command) => {
+  if (!props.editor) return;
+  
+  props.editor.commands.focus();
+  
   if (command === 'bullet') {
-    props.editor?.chain().focus().toggleBulletList().run();
+    // 如果当前在有序列表中，先取消它
+    if (props.editor.isActive('orderedList')) {
+      props.editor.commands.toggleOrderedList();
+    }
+    // 切换无序列表
+    props.editor.commands.toggleBulletList();
   } else if (command === 'ordered') {
-    props.editor?.chain().focus().toggleOrderedList().run();
+    // 如果当前在无序列表中，先取消它
+    if (props.editor.isActive('bulletList')) {
+      props.editor.commands.toggleBulletList();
+    }
+    // 切换有序列表
+    props.editor.commands.toggleOrderedList();
   }
 };
 
 const handleLink = () => {
-  const url = window.prompt('请输入链接地址:');
-  if (url) {
-    props.editor?.chain().focus().setLink({ href: url }).run();
+  if (!props.editor) return;
+  
+  // 获取当前选中的文本
+  const { state } = props.editor;
+  const { selection } = state;
+  const { from, to } = selection;
+  const selectedText = state.doc.textBetween(from, to, ' ');
+  
+  // 保存选中范围
+  savedSelection.value = { from, to };
+  
+  // 如果当前已经是链接，获取链接信息
+  const linkAttrs = props.editor.getAttributes('link');
+  
+  // 初始化表单
+  linkForm.value = {
+    text: selectedText || linkAttrs.href || '',
+    url: linkAttrs.href || ''
+  };
+  
+  linkDialogVisible.value = true;
+};
+
+const confirmInsertLink = async () => {
+  if (!linkFormRef.value || !props.editor) return;
+  
+  // 验证表单
+  try {
+    await linkFormRef.value.validate();
+  } catch (error) {
+    return;
   }
+  
+  const { text, url } = linkForm.value;
+  
+  // 处理URL，如果没有协议则添加 http://
+  let finalUrl = url.trim();
+  if (finalUrl && !finalUrl.match(/^https?:\/\//)) {
+    finalUrl = 'http://' + finalUrl;
+  }
+  
+  props.editor.commands.focus();
+  
+  // 使用保存的选中范围
+  if (savedSelection.value) {
+    const { from, to } = savedSelection.value;
+    const hasSelection = from !== to;
+    
+    if (hasSelection) {
+      // 如果有选中文本，先删除选中文本，然后插入链接
+      props.editor.chain()
+        .focus()
+        .setTextSelection({ from, to })
+        .deleteSelection()
+        .insertContent(`<a href="${finalUrl}">${text}</a>`)
+        .run();
+    } else {
+      // 如果没有选中文本，直接插入链接
+      props.editor.chain()
+        .focus()
+        .setTextSelection({ from, to })
+        .insertContent(`<a href="${finalUrl}">${text}</a>`)
+        .run();
+    }
+  } else {
+    // 如果没有保存的范围，直接插入链接
+    props.editor.chain()
+      .focus()
+      .insertContent(`<a href="${finalUrl}">${text}</a>`)
+      .run();
+  }
+  
+  linkDialogVisible.value = false;
+  linkForm.value = { text: '', url: '' };
+  savedSelection.value = null;
 };
 
 const handleCodeCommand = (command) => {
+  if (!props.editor) return;
   if (command === 'inline') {
-    props.editor?.chain().focus().toggleCode().run();
+    props.editor.chain().focus().toggleCode().run();
   } else if (command === 'block') {
-    props.editor?.chain().focus().toggleCodeBlock().run();
+    props.editor.chain().focus().toggleCodeBlock().run();
   }
 };
 
 const handleImage = () => {
+  if (!props.editor) return;
   const url = window.prompt('请输入图片地址:');
   if (url) {
-    props.editor?.chain().focus().setImage({ src: url }).run();
+    props.editor.chain().focus().setImage({ src: url }).run();
   }
 };
 
 const emojiDialogVisible = ref(false);
+const tableSizeDialogVisible = ref(false);
+const tableSizeForm = ref({
+  rows: 3,
+  cols: 3,
+  withHeaderRow: true
+});
+
+const linkDialogVisible = ref(false);
+const linkFormRef = ref(null);
+const linkForm = ref({
+  text: '',
+  url: ''
+});
+const savedSelection = ref(null); // 保存选中文本的范围
+
+// 链接表单验证规则
+const linkRules = {
+  text: [
+    { required: true, message: '请输入链接文字', trigger: 'blur' }
+  ],
+  url: [
+    { required: true, message: '请输入链接地址', trigger: 'blur' },
+    { 
+      type: 'url', 
+      message: '请输入有效的链接地址', 
+      trigger: 'blur',
+      transform(value) {
+        // 如果用户没有输入协议，自动添加 http://
+        if (value && !value.match(/^https?:\/\//)) {
+          return 'http://' + value;
+        }
+        return value;
+      }
+    }
+  ]
+};
 
 const emojiList = [
   '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃',
@@ -273,12 +476,37 @@ const emojiList = [
 ];
 
 const insertEmoji = (emoji) => {
-  props.editor?.chain().focus().insertContent(emoji).run();
+  if (!props.editor) return;
+  props.editor.chain().focus().insertContent(emoji).run();
   emojiDialogVisible.value = false;
 };
 
+// 检查是否在表格内
+const isInTable = computed(() => {
+  if (!props.editor) return false;
+  return props.editor.isActive('table');
+});
+
 const handleTable = () => {
-  props.editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  if (!props.editor || isInTable.value) return;
+  // 显示表格尺寸选择对话框
+  tableSizeForm.value = {
+    rows: 3,
+    cols: 3,
+    withHeaderRow: true
+  };
+  tableSizeDialogVisible.value = true;
+};
+
+const confirmInsertTable = () => {
+  if (!props.editor) return;
+  props.editor.commands.focus();
+  props.editor.commands.insertTable({
+    rows: tableSizeForm.value.rows,
+    cols: tableSizeForm.value.cols,
+    withHeaderRow: tableSizeForm.value.withHeaderRow
+  });
+  tableSizeDialogVisible.value = false;
 };
 
 const handleEmoji = () => {
@@ -490,6 +718,22 @@ const isCodeBlock = computed(() => props.editor?.isActive('codeBlock'));
 
 .dark .emoji-item:hover {
   background-color: var(--el-fill-color-dark);
+}
+
+/* 链接表单样式 */
+.link-form-extra {
+  margin-top: 4px;
+}
+
+.link-form-extra .hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dark .link-form-extra .hint {
+  color: var(--el-text-color-placeholder);
 }
 </style>
 
