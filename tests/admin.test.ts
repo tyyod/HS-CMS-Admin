@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import ElementPlus from 'element-plus'
 import Admin from '../src/views/admin.vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 
@@ -9,7 +10,7 @@ vi.mock('../src/api/user', () => ({
 }))
 
 describe('管理页', () => {
-  it('应包含“HSCMS”标题', async () => {
+  it('应包含“三角猫CMS”标题', async () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [{ path: '/', component: { template: '<div></div>' } }]
@@ -18,9 +19,9 @@ describe('管理页', () => {
     await router.isReady()
     const wrapper = mount(Admin, {
       global: {
-        plugins: [router]
+        plugins: [router, ElementPlus]
       }
     })
-    expect(wrapper.text()).toContain('HSCMS')
+    expect(wrapper.text()).toContain('三角猫CMS')
   })
 })
